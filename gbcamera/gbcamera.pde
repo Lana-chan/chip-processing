@@ -8,12 +8,12 @@ Capture cam;
 PImage screen;
 int cx, cy;
 
-int threshold = 4;
-color colormap[] = {
-  color(0),
-  color(96),
-  color(160),
-  color(255)
+int threshold = 4;   // number of colors
+color colormap[] = { // palette
+  color(15,56,15),
+  color(48,98,48),
+  color(140,173,15),
+  color(156,189,15)
 };
 
 int pattern[][] = {
@@ -26,9 +26,24 @@ int pattern[][] = {
     {15, 47,  7, 39, 13, 45,  5, 37},
     {63, 31, 55, 23, 61, 29, 53, 21} };
 
-int values[] = {51, 102, 154, 206};
+//int values[] = {51, 102, 154, 206};
+int values[] = new int[4];
+int spread = 96; // contrast (from middle to topmost value)
+int center = 128; // brightness (offset of values)
+
+// calculates the values in order to tweak in real time
+void calculateValues() {
+  for(int i = 0; i < values.length; i++) {
+    int bottom = center-spread;
+    int top = center+spread;
+    values[i] = round(map(i, 0, values.length-1, bottom, top));
+    print(values[i] + " ");
+  }
+  println();
+}
 
 void setup() {
+  calculateValues();
   cam = new Capture(this, 320, 240);
   cam.start();
   imageMode(CENTER);
@@ -80,10 +95,27 @@ int nearest(int num) {
   return idx; 
 }
 
-
+// applies dithering
 color pixfilter(float c, int x, int y) {
   int factor = pattern[x % 8][y % 8];
   int attempt = (int)c + factor * threshold;
   int id = nearest(attempt);
   return colormap[id];
 };
+
+// real time value tweaks
+void keyPressed() {
+  if(keyCode == UP) {           // more brightness
+    center -= 8;
+    calculateValues();
+  } else if(keyCode == DOWN) {  // less brightness
+    center += 8;
+    calculateValues();
+  } else if(keyCode == RIGHT) { // more contrast
+    spread -= 8;
+    calculateValues();
+  } else if(keyCode == LEFT) {  // less contrast
+    spread += 8;
+    calculateValues();
+  }
+}
