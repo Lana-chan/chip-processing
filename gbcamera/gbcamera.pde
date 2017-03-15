@@ -1,5 +1,5 @@
 /*
-  Simple 8x8 Bayes ordered dithering filter
+  Simple 8x8 Bayer ordered dithering filter
 */
 
 import processing.video.*;
@@ -26,7 +26,7 @@ int pattern[][] = {
     {15, 47,  7, 39, 13, 45,  5, 37},
     {63, 31, 55, 23, 61, 29, 53, 21} };
 
-int values[] = {0, 96, 160, 255};
+int values[] = {51, 102, 154, 206};
 
 void setup() {
   cam = new Capture(this, 320, 240);
@@ -45,13 +45,16 @@ void draw() {
   }
   screen.loadPixels();
   int camx, camy;
+  // scale the camera source to x2 128x112
   for(int y = 0; y < screen.height; y+=2) {
     camy = floor(map(y, 0, screen.height, 0, cam.height));
     for(int x = 0; x < screen.width; x+=2) {
       camx = floor(map(x, 0, screen.width, 0, cam.width));
       int scrpos = x + y*screen.width;
       int campos = camx + camy*cam.width;
+      // this applies the filter
       color pixel = pixfilter(brightness(cam.pixels[campos]),x,y);
+      // pushes to 4 pixels for x2 scale
       screen.pixels[scrpos] = pixel;
       screen.pixels[scrpos+1] = pixel;
       screen.pixels[scrpos+screen.width] = pixel;
@@ -63,6 +66,7 @@ void draw() {
   image(screen, cx, cy, screen.width, screen.height);
 }
 
+// finds nearest value
 int nearest(int num) {
   int distance = Math.abs(values[0] - num);
   int idx = 0;
@@ -75,6 +79,7 @@ int nearest(int num) {
   }
   return idx; 
 }
+
 
 color pixfilter(float c, int x, int y) {
   int factor = pattern[x % 8][y % 8];
